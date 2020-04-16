@@ -242,7 +242,7 @@ class VerifyEmaiView(View):
         return redirect("/info/")
 
 
-class AddressViwe(LoginRequiredMixin):
+class AddressViwe(LoginRequired, View):
     """用户收货地址"""
 
     def get(self,request):

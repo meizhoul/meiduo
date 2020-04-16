@@ -23,6 +23,6 @@ urlpatterns =[
     #激活用户邮箱
     path("emails/verification/", views.VerifyEmaiView.as_view()),
     #收获地址
-    path("addresses/",views.AddressViwe.as_view()),
+    path("addresses/", views.AddressViwe.as_view()),
 
 ]
