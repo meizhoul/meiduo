@@ -14,3 +14,6 @@ class Area(models.Model):
 
     def __srt__(self):
         return self.name
+
+
+

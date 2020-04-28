@@ -24,5 +24,6 @@ urlpatterns =[
     path("emails/verification/", views.VerifyEmaiView.as_view()),
     #收获地址
     path("addresses/", views.AddressViwe.as_view()),
-
+    #用户新增地址
+    path("addresses/create/",views.CreateAddressView.as_view()),
 ]

@@ -23,12 +23,12 @@ class AreaView(View):
                 for province_model in province_qs:
                     #遍历查询集，将里面的每一个模型转换成字典
                     province_list.append({
-                        "id":province_model.id,
-                        "name":province_model.name
+                        "id": province_model.id,
+                        "name": province_model.name
 
                     })
-                    cache.set("province_list",province_list,3600)
-                return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'province_list': province_list})
+                cache.set("province_list", province_list,3600)
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'province_list': province_list})
 
 
         #如果area_id为None 说明查询的是所有省
@@ -44,7 +44,7 @@ class AreaView(View):
                 for sub_model in sub_qs:
                     sub_list.append({
                         "id": sub_model.id,
-                        "name": sub_model.name
+                        "name": sub_model.name,
                     })
 
                 #包装要响应的数据
@@ -55,4 +55,6 @@ class AreaView(View):
                 }
                 #设置缓存
                 cache.set("sub_area"+area_id, data_dict, 3600)
-            return http.JsonResponse({"code": RETCODE.OK, 'errmsg': 'ok', 'sub_data': data_dict})
+            return http.JsonResponse({"code": RETCODE.OK, 'errmsg': 'OK', 'sub_data': data_dict})
+
+
