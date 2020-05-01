@@ -460,3 +460,24 @@ class DefultAddressView(LoginRequired):
        request.user.save()
 
        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class UpdateTiteAddressView(LoginRequired):
+    """修改用户收获地址标题"""
+    def put(self,request,address_id):
+
+        try:
+            address = Address.objects.get(id=address_id,users=request.user, is_deleted=False)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden("设置用户收获地址标题失败")
+
+        json_dict = json.loads(request.body.decode())
+        title = json_dict.get("title")
+
+        if title is None:
+            return http.HttpResponseForbidden("缺少必传参数")
+
+        address.title = title
+        address.save()
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})

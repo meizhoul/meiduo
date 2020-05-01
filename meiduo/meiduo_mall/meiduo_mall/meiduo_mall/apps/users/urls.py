@@ -30,4 +30,6 @@ urlpatterns =[
     path("addresses/<int:address_id>/",views.UpdateDestroyAddressView.as_view()),
     #设置默认收获地址
     path("addresses/<int:address_id>/default/",views.DefultAddressView.as_view()),
+    #修改用户收获地址标题
+    path("addresses/<int:address_id>/title/",views.UpdateTiteAddressView.as_view()),
 ]
