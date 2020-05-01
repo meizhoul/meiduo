@@ -26,4 +26,8 @@ urlpatterns =[
     path("addresses/", views.AddressViwe.as_view()),
     #用户新增地址
     path("addresses/create/",views.CreateAddressView.as_view()),
+    #用户修改删除地址
+    path("addresses/<int:address_id>/",views.UpdateDestroyAddressView.as_view()),
+    #设置默认收获地址
+    path("addresses/<int:address_id>/default/",views.DefultAddressView.as_view()),
 ]

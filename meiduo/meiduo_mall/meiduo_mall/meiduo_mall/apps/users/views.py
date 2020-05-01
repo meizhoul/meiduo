@@ -278,99 +278,18 @@ class AddressViwe(LoginRequired):
 
 
 
-#
-# class CreateAddressView(LoginRequiredMixin,View):
-#     """新增地址"""
-#     def post(self,request):
-#         #判断用户收获地址不超过20个
-#         user = request.user
-#         #查询当前登陆用户未被逻辑删除的收获地址
-#         count = Address.objects.filter(user=user,is_deleted=False).count()
-#
-#         if count >= 20:
-#             return http.JsonResponse({'code':RETCODE.MAXNUM, 'errmsg': '收获地址超限'})
-#         #接受请求体数据
-#         json_dict = json.loads(request.body.decode())
-#         title = json_dict.get("title")
-#         receiver = json_dict.get("receiver")
-#         province_id = json_dict.get("province_id")
-#         city_id = json_dict.get("city_id")
-#         district_id = json_dict.get("district_id")
-#         place = json_dict.get("place")
-#         mobile = json_dict.get("mobile")
-#         tel = json_dict.get("tel")
-#         email = json_dict.get("email")
-#         #校验
-#         if all([receiver,province_id,city_id,district_id,place,mobile]) is False:
-#             return http.HttpResponseForbidden("缺少必传参数")
-#
-#         if not re.match(r'^1[3-9]\d{9}$', mobile):
-#             return http.HttpResponseForbidden('参数mobile有误')
-#
-#         if tel:
-#             if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
-#                 return http.HttpResponseForbidden('参数tel有误')
-#
-#         if email:
-#             if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
-#                 return http.HttpResponseForbidden('参数email有误')
-#         #新增
-#         try:
-#             address = Address.objects.create(
-#                 user=user,
-#                 title=title,
-#                 receiver=receiver,
-#                 province_id=province_id,
-#                 city_id=city_id,
-#                 district_id=district_id,
-#                 place=place,
-#                 mobile=mobile,
-#                 tel=tel,
-#                 email=email
-#             )
-#
-#         except DatabaseError as e:
-#             logger.error(e)
-#             return http.HttpResponseForbidden("添加收获地址失败")
-#
-#         #设置默认地址，如果用户没有默认收获地址，就把当前新增的收获地址设置为默认地址
-#         if user.default_address is None:
-#             user.default_address = address
-#             user.save()
-#
-#         #把新增的adderss模型对象转换成字典，并响应
-#         adderss_dict={
-#             'id': address.id,
-#             'title': address.title,
-#             'receiver': address.receiver,
-#             'province_id': address.province_id,
-#             'province': address.province.name,
-#             'city_id': address.city_id,
-#             'city': address.city.name,
-#             'district_id': address.district_id,
-#             'district': address.district.name,
-#             'place': address.place,
-#             'mobile': address.mobile,
-#             'tel': address.tel,
-#             'email': address.email,
-#         }
-#         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加收货地址成功', 'adderss': adderss_dict})
 
-
-class CreateAddressView(LoginRequired,View):
-    """收货地址新增"""
-
-    def post(self, request):
-
-        # 判断用户收货地址上限 不能多于20个
+class CreateAddressView(LoginRequiredMixin,View):
+    """新增地址"""
+    def post(self,request):
+        #判断用户收获地址不超过20个
         user = request.user
-        # 查询当前登录用户未逻辑删除的收货地址数量
+        #查询当前登陆用户未被逻辑删除的收获地址
         count = Address.objects.filter(user=user, is_deleted=False).count()
-        # user.addresses.filter(is_deleted=False).count()
-        if count >= 20:
-            return http.JsonResponse({'code': RETCODE.MAXNUM, 'errmsg': '收货地址超限'})
 
-        # 接收请求体数据
+        if count >= 20:
+            return http.JsonResponse({'code':RETCODE.MAXNUM, 'errmsg': '收获地址超限'})
+
         json_dict = json.loads(request.body.decode())
         title = json_dict.get('title')
         receiver = json_dict.get('receiver')
@@ -382,23 +301,21 @@ class CreateAddressView(LoginRequired,View):
         tel = json_dict.get('tel')
         email = json_dict.get('email')
 
-        # 校验
-        if all([title, receiver, province_id, city_id, district_id, place, mobile]) is False:
-            return http.HttpResponseForbidden('缺少必传参数')
+        #校验
+        if all([receiver,province_id,city_id,district_id,place,mobile]) is False:
+            return http.HttpResponseForbidden("缺少必传参数")
 
         if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('参数mobile有误')
+
         if tel:
             if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
                 return http.HttpResponseForbidden('参数tel有误')
+
         if email:
             if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
                 return http.HttpResponseForbidden('参数email有误')
-
-        # try:
-        #     Area.objects.get(id=province_id)
-
-        # 新增
+        #新增
         try:
             address = Address.objects.create(
                 user=user,
@@ -412,15 +329,90 @@ class CreateAddressView(LoginRequired,View):
                 tel=tel,
                 email=email
             )
+
         except DatabaseError as e:
             logger.error(e)
-            return http.HttpResponseForbidden('添加收货地址失败')
+            return http.HttpResponseForbidden("添加收获地址失败")
 
-        # 如果用户还没有默认收货地址,把当前新增的收货地址设置为用户的默认收货地址
+
         if user.default_address is None:
             user.default_address = address
             user.save()
-        # 把新增的address模型对象转换成字典,并响应给前端
+
+        adderss_dict={
+            'id': address.id,
+            'title': address.title,
+            'receiver': address.receiver,
+            'province_id': address.province_id,
+            'province': address.province.name,
+            'city_id': address.city_id,
+            'city': address.city.name,
+            'district_id': address.district_id,
+            'district': address.district.name,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email,
+        }
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加收货地址成功', 'address': adderss_dict})
+
+
+class UpdateDestroyAddressView(LoginRequired):
+    """修改删除收货地址"""
+    def put(self,request,address_id):
+        """修改收获地址逻辑"""
+        #对assress_id进行校验
+        try:
+             #校验address_id校验当前登陆用户未必逻辑删除的收获地址
+            address = Address.objects.get(id=address_id, user=request.user, is_deleted=False)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden("修改收获地址失败")
+
+        #接受请求体
+        json_dict = json.loads(request.body.decode())
+        title = json_dict.get("title")
+        receiver = json_dict.get("receiver")
+        province_id = json_dict.get("province_id")
+        city_id = json_dict.get("city_id")
+        district_id = json_dict.get("district_id")
+        place = json_dict.get("place")
+        mobile = json_dict.get("mobile")
+        tel = json_dict.get("tel")
+        email = json_dict.get("email")
+
+        #校验
+        if all([title,receiver,province_id,city_id,district_id,place,mobile]) is False:
+            return http.HttpResponseForbidden("缺少必传参数")
+
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden('参数mobile有误')
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.HttpResponseForbidden('参数email有误')
+
+
+
+        #修改
+        try:
+            address.title = title
+            address.receiver = receiver
+            address.province_id = province_id
+            address.city_id = city_id
+            address.district_id = district_id
+            address.place = place
+            address.mobile = mobile
+            address.tel = tel
+            address.email = email
+            address.save()
+        except DatabaseError as e:
+            logger.error(e)
+            return http.HttpResponseForbidden('修改收货地址失败')
+
+        #把新增的address模型对象转换成字典,并响应给前端
         address_dict = {
             'id': address.id,
             'title': address.title,
@@ -436,8 +428,35 @@ class CreateAddressView(LoginRequired,View):
             'tel': address.tel,
             'email': address.email,
         }
-        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加收货地址成功', 'address': address_dict})
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改收货地址成功', 'address': address_dict})
 
 
+    def delete(self,request,address_id):
+        """收获地址删除"""
+        try:
+            address=Address.objects.get(id=address_id,user=request.user,is_deleted=False)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden('删除收货地址失败')
+
+        address.is_deleted= True#逻辑删除
+        address.save()
+
+        #address.delete()#物理删除
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 
+class DefultAddressView(LoginRequired):
+    """设置默认地址"""
+    def put(self,request,address_id):
+
+       try:
+            address= Address.objects.get(id=address_id,user=request.user,is_deleted=False)
+
+       except Address.DoesNotExist:
+           return http.HttpResponseForbidden("设置默认收货地址失败")
+
+       request.user.default_address = address #给用户默认收获地址设置新值
+       request.user.save()
+
+       return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
