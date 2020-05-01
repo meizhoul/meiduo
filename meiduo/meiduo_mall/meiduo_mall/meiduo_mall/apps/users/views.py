@@ -481,3 +481,36 @@ class UpdateTiteAddressView(LoginRequired):
         address.save()
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class ChangePasswordView(LoginRequired):
+    """修改密码"""
+
+    def get(self,request):
+        return render(request,"user_center_pass.html")
+
+
+    def post(self,request):
+        #接受表单
+        old_pwd = request.POST.get("old_pwd")
+        new_pwd = request.POST.get("new_pwd")
+        new_cpwd = request.POST.get("new_cpwd")
+        #校验
+        if all([old_pwd,new_pwd,new_cpwd]) is False:
+            return http.HttpResponseForbidden("缺少必传参数'")
+        #修改密码
+        if request.user.check_password(old_pwd) is False:
+            return render(request,'user_center_pass.html',{"origin_pwd_errmsg":"原始密码不正确"})
+
+        if not re.match('^[0-9A-Za-z]{8,20}$', new_pwd):
+            return http.HttpResponseForbidden("请输入8-20位长度的密码")
+
+        if new_pwd != new_cpwd:
+            return http.HttpResponseForbidden("两次密码输入的不一致")
+
+        request.user.set_password(new_pwd)
+        request.user.save()
+
+        #重定向login
+        return redirect('/logout')
+        #响应
