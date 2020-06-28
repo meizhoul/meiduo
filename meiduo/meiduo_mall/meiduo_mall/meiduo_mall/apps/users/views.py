@@ -11,7 +11,7 @@ from django.contrib.auth import mixins
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import DatabaseError
-
+from django_redis import get_redis_connection
 
 from .models import User, Address
 
@@ -23,6 +23,8 @@ from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequired
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url,check_verify_email
+from goods.models import SKU
+from carts.utils import merge_cart_cookie_to_redis
 
 logger = logging.getLogger("django")
 
@@ -170,6 +172,8 @@ class LoginView(View):
         response = redirect(next or '/')
         # response = redirect((reverse('contents:index')))#创建重定向响应对象
         response.set_cookie('username', user.username, max_age=remembered and settings.SESSION_COOKIE_AGE)
+        #购物车合并
+        merge_cart_cookie_to_redis(request,response)
         return response
 
 
@@ -514,3 +518,67 @@ class ChangePasswordView(LoginRequired):
         #重定向login
         return redirect('/logout')
         #响应
+
+
+class HisoryGoodsView(View):
+    """商品浏览记录"""
+
+    def post(self,request):
+        """保存商品浏览记录"""
+        #判断用户是是否登陆
+        if not request.user.is_authenticated:
+            return http.JsonResponse({"code": RETCODE.SESSIONERR,"errmsg": "用户未登录"})
+
+        #获取请求体中的sku_id
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+
+        #校验
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden("sku_id无效")
+
+        #创建redis连接对象
+        redis_conn = get_redis_connection("history")
+
+        #创建管道
+        pl = redis_conn.pipeline()
+        #存储每个用户的redis的唯一key
+
+        key = "history_%s" % request.user.id
+        #先去重
+        pl.lrem(key, 0, sku_id)
+        #添加到列表的开头
+        pl.lpush(key,sku_id)
+        #保留列表中的前5个元素
+        pl.ltrim(key, 0, 4)
+        #执行管道
+        pl.execute()
+        #响应
+        return http.JsonResponse({'code':RETCODE.OK,'errmsg': 'OK'})
+
+    def get(self,request):
+        #判断用户是否登陆
+        if not request.user.is_authenticated:
+            return http.JsonResponse({"code": RETCODE.SESSIONERR,"errmsg": "用户未登录"})
+
+        #创建redis连接对象
+        redis_conn = get_redis_connection("history")
+        #存储每个用户redis的唯一key
+        key = "history_%s" % request.user.id
+        #获取当前用户的浏览记录数据
+        sku_id_list = redis_conn.lrange(key, 0, -1)
+        #定义一个列表,用来装sku字典数据
+        sku_list =[]
+        #遍历sku_id列表，有顺序的一个一个去获取SKU模型并转换成字典
+        for sku_id in sku_id_list:
+            sku = SKU.objects.get(id=sku_id)
+            sku_list.append({
+                "id": sku.id,
+                "name":sku.name,
+                "price":sku.price,
+                "default_image_url":sku.default_image.url
+            })
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': sku_list})
+

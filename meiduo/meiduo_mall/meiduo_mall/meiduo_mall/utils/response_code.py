@@ -19,7 +19,7 @@ class RETCODE:
     OPENIDERR           = "5005"
     PARAMERR            = "5006"
     STOCKERR            = "5007"
-
+    MAXNUM              = "5009"
 
 err_msg = {
     RETCODE.OK                 : u"成功",
@@ -41,4 +41,6 @@ err_msg = {
     RETCODE.OPENIDERR          : u"无效的openid",
     RETCODE.PARAMERR           : u"参数错误",
     RETCODE.STOCKERR           : u"库存不足",
+    RETCODE.MAXNUM             : u"收获地址超限",
+
 }

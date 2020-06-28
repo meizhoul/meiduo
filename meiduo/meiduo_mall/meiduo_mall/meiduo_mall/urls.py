@@ -28,5 +28,11 @@ urlpatterns = [
 
     path("", include("verifications.urls")),
     path("", include("oauth.urls")),
+    path("",include("areas.urls")),
+    path("", include(('goods.urls', 'goods'), namespace="goods")),
+    path("", include(('carts.urls', 'carts'), namespace="carts")),
+    path("", include(("orders.urls", 'orders'), namespace="orders")),
+    path('search/', include('haystack.urls')),#全文检索
+    path("", include(("payment.urls", 'payment'), namespace="payment"))#支付宝
     # re_path(r'^', include('verifications.urls')),
 ]

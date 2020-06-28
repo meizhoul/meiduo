@@ -34,4 +34,7 @@ urlpatterns =[
     path("addresses/<int:address_id>/title/",views.UpdateTiteAddressView.as_view()),
     #修改密码
     path("password/",views.ChangePasswordView.as_view()),
+    #商品浏览记录
+    path("browse_histories/", views.HisoryGoodsView.as_view()),
+
 ]

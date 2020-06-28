@@ -15,6 +15,7 @@ from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
 from .models import OAuthQQUser
 from .utils import generate_openid_signature, check_openid_signature
+from carts.utils import merge_cart_cookie_to_redis
 
 logger = logging.getLogger("django")
 
@@ -122,6 +123,8 @@ class QQAuthUserViwe(View):
             login(request, user)
             response = redirect(request.GET.get("state")or '/')
             response.set_cookie("username", user.username,max_age=settings.SESSION_COOKIA_AGE)
+            #购物车合并
+            merge_cart_cookie_to_redis(request, response)
             return response
 
     def post(self,request):
@@ -179,6 +182,8 @@ class QQAuthUserViwe(View):
         login(request,user)
         response = redirect(request.GET.get("state")or"/")
         response.set_cookie("username",user.username,max_age=settings.SESSION_COOKIE_AGE)
+        #购物车合并
+        merge_cart_cookie_to_redis(request, response)
         return response
 
 

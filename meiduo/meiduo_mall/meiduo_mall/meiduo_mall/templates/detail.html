@@ -43,7 +43,6 @@
         <a href="/" class="logo fl"><img src="/static/images/logo.png"></a>
         <div class="search_wrap fl">
             <form method="get" action="/search/" class="search_con">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
                 <input type="submit" class="input_btn fr" name="" value="搜索">
             </form>
@@ -74,25 +73,25 @@
                 <h1 class="fl">商品分类</h1>
                 <ul class="sub_menu">
                     {% for category in categories.values() %}
-                    <li>
-                        <div class="level1">
-                            {% for channel in category.channels %}
-                            <a href="{{ channel.url }}">{{ channel.name }}</a>
-                            {% endfor %}
-                        </div>
-                        <div class="level2">
-                            {% for sub_cat in category.sub_cats %}
-                            <div class="list_group">
-                                <div class="group_name fl">{{ sub_cat.name }} &gt;</div>
-                                <div class="group_detail fl">
-                                    {% for sub_cat3 in sub_cat.sub_cats %}
-                                    <a href="/list/{{ sub_cat3.id }}/1/">{{ sub_cat3.name }}</a>
-                                    {% endfor %}
-                                </div>
+                        <li>
+                            <div class="level1">
+                                {% for channel in category.channels %}
+                                    <a href="{{ channel.url }}">{{ channel.name }}</a>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-                        </div>
-                    </li>
+                            <div class="level2">
+                                {% for sub_cat in category.sub_cats %}
+                                    <div class="list_group">
+                                        <div class="group_name fl">{{ sub_cat.name }} &gt;</div>
+                                        <div class="group_detail fl">
+                                            {% for sub_cat3 in sub_cat.sub_cats %}
+                                                <a href="/list/{{ sub_cat3.id }}/1/">{{ sub_cat3.name }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </li>
                     {% endfor %}
                 </ul>
             </div>
@@ -116,13 +115,13 @@
     </div>
 
     <div class="goods_detail_con clearfix">
-        <div class="goods_detail_pic fl"><img src="/static/images/goods_450.jpg"></div>
+        <div class="goods_detail_pic fl"><img src="{{ sku.default_image.url }}"></div>
         <div class="goods_detail_list fr">
-            <h3>Apple MacBook Pro 13.3英寸笔记本 银色</h3>
-            <p>【全新2017款】MacBook Pro,一身才华，一触，即发 了解【黑五返场特惠】 更多产品请点击【美多官方Apple旗舰店】</p>
+            <h3>{{ sku.name }}</h3>
+            <p>【{{ sku.caption }}】</p>
             <div class="price_bar">
-                <span class="show_pirce">¥<em>11388.00</em></span>
-                <a href="javascript:;" class="goods_judge">449人评价</a>
+                <span class="show_pirce">¥<em>{{ sku.price }}</em></span>
+                <a href="javascript:;" class="goods_judge">{{ sku.comments }}人评价</a>
             </div>
             <div class="goods_num clearfix">
                 <div class="num_name fl">数 量：</div>
@@ -132,22 +131,30 @@
                     <a @click="on_minus" class="minus fr">-</a>
                 </div>
             </div>
-            <div class="type_select">
-                <label>屏幕尺寸:</label>
-                <a href="javascript:;" class="select">13.3英寸</a>
-                <a href="javascript:;">15.4英寸</a>
-            </div>
-            <div class="type_select">
-                <label>颜色:</label>
-                <a href="javascript:;" class="select">深灰色</a>
-                <a href="javascript:;">银</a>
-            </div>
-            <div class="type_select">
-                <label>版本:</label>
-                <a href="javascript:;" class="select">core i5/8G内存/256G存储</a>
-                <a href="javascript:;">core i5/8G内存/128G存储</a>
-                <a href="javascript:;">core i5/8G内存/512G存储/Multi-Touch Bar</a>
-            </div>
+
+
+            {% for spec in spec_qs %}
+                <div class="type_select">
+                    <label>{{ spec.name }}:</label>
+                    {% for option in spec.spec_options %}
+                        {% if option.sku_id == sku.id %}
+                            <a href="#" class="select">{{ option.value }}</a>
+                        {% elif option.sku_id %}
+                            {#  开发阶段 #}
+                            <a href="/detail/{{ option.sku_id }}/">{{ option.value }}</a>
+                            {# 生产阶段 #}
+{#                            <a href="/detail/{{ option.sku_id }}.html">{{ option.value }}</a>#}
+                        {% else %}
+                            <a href="#" style="border: #9f9f9f dashed 1px" title="此商品无货">{{ option.value }}</a>
+
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+
+
+
             <div class="total">总价：<em>[[ sku_amount ]]元</em></div>
             <div class="operate_btn">
                 <a @click="add_cart" class="add_cart" id="add_cart">加入购物车</a>
@@ -159,11 +166,13 @@
         <div class="l_wrap fl clearfix">
             <div class="new_goods">
                 <h3>热销排行</h3>
-                <li v-for="hot in hots">
-                    <a :href="'/detail/'+hot.id+'/'"><img :src="hot.default_image_url"></a>
-                    <h4><a :href="'/detail/'+hot.id+'/'">[[ hot.name ]]</a></h4>
-                    <div class="price">￥[[ hot.price ]]</div>
-                </li>
+                <ul>
+                    <li v-for="hot in hots">
+                        <a :href="'/detail/'+hot.id+'/'"><img :src="hot.default_image_url"></a>
+                        <h4><a :href="'/detail/'+hot.id+'/'">[[ hot.name ]]</a></h4>
+                        <div class="price">￥[[ hot.price ]]</div>
+                    </li>
+                </ul>
             </div>
         </div>
 
@@ -177,16 +186,14 @@
             <div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
                 <dl>
                     <dt>商品详情：</dt>
-                    <dd>它纤薄如刃，轻盈如羽，却又比以往速度更快、性能更强大。它为你展现的，是迄今最明亮、最多彩的 Mac
-                        笔记本显示屏。它更配备了触控栏，一个内置于键盘的玻璃面多点触控条，让你能在需要时快速取用各种工具。MacBook Pro 是对我们突破性理念的一场出色演绎，而它，也正期待着演绎你的奇思妙想。
+                    <dd>{{ spu.desc_detail | safe }}
                     </dd>
                 </dl>
             </div>
             <div @click="on_tab_content('pack')" class="tab_content" :class="tab_content.pack?'current':''">
                 <dl>
                     <dt>规格与包装：</dt>
-                    <dd>它纤薄如刃，轻盈如羽，却又比以往速度更快、性能更强大。它为你展现的，是迄今最明亮、最多彩的 Mac
-                        笔记本显示屏。它更配备了触控栏，一个内置于键盘的玻璃面多点触控条，让你能在需要时快速取用各种工具。MacBook Pro 是对我们突破性理念的一场出色演绎，而它，也正期待着演绎你的奇思妙想。
+                    <dd>{{ spu.desc_pack | safe }}
                     </dd>
                 </dl>
             </div>
@@ -209,8 +216,7 @@
             <div @click="on_tab_content('service')" class="tab_content" :class="tab_content.service?'current':''">
                 <dl>
                     <dt>售后服务：</dt>
-                    <dd>它纤薄如刃，轻盈如羽，却又比以往速度更快、性能更强大。它为你展现的，是迄今最明亮、最多彩的 Mac
-                        笔记本显示屏。它更配备了触控栏，一个内置于键盘的玻璃面多点触控条，让你能在需要时快速取用各种工具。MacBook Pro 是对我们突破性理念的一场出色演绎，而它，也正期待着演绎你的奇思妙想。
+                    <dd>{{ spu.desc_service | safe }}
                     </dd>
                 </dl>
             </div>
@@ -232,9 +238,9 @@
     </div>
 </div>
 <script>
-    var price = "";
-    var category_id = "";
-    var sku_id = "";
+    var price = {{ sku.price }};
+    var category_id = {{ category.id }};
+    var sku_id = {{ sku.id }};
 </script>
 <script type="text/javascript" src="/static/js/common.js"></script>
 <script type="text/javascript" src="/static/js/base.js"></script>

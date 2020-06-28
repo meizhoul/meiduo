@@ -39,10 +39,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'haystack',  # 全文检索
+
     'users',  # 用户模块应用
-    'contents',  # 首页
+    'contents',  # 首页广告
     'verifications',  # 验证
-    'oauth'#QQ登陆
+    'oauth',#QQ登陆
+    'areas',#省市
+    'goods.apps.GoodsConfig',#商品
+    'orders.apps.OrdersConfig',#订单
+    'payment.apps.PaymentConfig',#支付宝
+    'django_crontab',  # 定时任务
 
 ]
 
@@ -115,12 +122,20 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 #     }
 # }
 DATABASES = {
-    'default': {
+    'default': { #读写分离 主机 负责增删改操作
         'ENGINE': 'django.db.backends.mysql', # 数据库引擎
         'HOST': '127.0.0.1', # 数据库主机
         'PORT': 3306, # 数据库端口
         'USER': 'itheima', # 数据库用户名
         'PASSWORD': '123456', # 数据库用户密码
+        'NAME': 'meiduo30' # 数据库名字
+    },
+    'slave': {#读写分离  从机 负责查询操作
+        'ENGINE': 'django.db.backends.mysql', # 数据库引擎
+        'HOST': '127.0.0.1', # 数据库主机
+        'PORT': 8306, # 从机数据库端口
+        'USER': 'root', # 数据库用户名
+        'PASSWORD': 'mysql', # 数据库用户密码
         'NAME': 'meiduo30' # 数据库名字
     },
 }
@@ -147,6 +162,23 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+
+    "history": { # 用户浏览记录
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+
+    "carts": {  # 购物车
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+
 }
 # 指定session数据存储引擎和位置
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -174,16 +206,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
-
+# USE_TZ = True  # 默认为True时数据库还是会用世界时间 UTC
+USE_TZ = False  # 不要使用默认UTC时区 使用我们自己配置的时区
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -256,3 +290,46 @@ EMAIL_HOST_PASSWORD = 'python99'  # 邮箱授权时获得的密码，非注册�
 EMAIL_FROM = '美多商城<itcast99@163.com>'  # 发件人抬头
 #邮箱激活链接
 EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
+
+#指定文件存储远程主机域名端口
+# MEDIA_URL='http://192.168.74.159:8888/'
+DEFAULT_FILE_STORAGE = "meiduo_mall.utils.fastdfs.fdfs_storage.FastDFSStorage"
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.74.159:9200/', # Elasticsearch服务器ip地址，端口号固定为9200
+        'INDEX_NAME': 'meiduo_mall', # Elasticsearch建立的索引库的名称
+    },
+}
+
+# 当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+#指定搜索出来的数据展示5条
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
+
+
+# 支付宝
+ALIPAY_APPID = '2016102500755051'
+ALIPAY_DEBUG = True  # 表示是沙箱环境还是真实支付环境 Ture为沙箱环境 False为真是环境
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+
+#定时器配置
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件
+    ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log')),
+     ('*/1 * * * *', 'goods.crons.generate_static_sku_detail', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
+
+]
+#定时器配置中文
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+#mysql读写分离路由配置
+DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
+
+#收集静态文件目录
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
+

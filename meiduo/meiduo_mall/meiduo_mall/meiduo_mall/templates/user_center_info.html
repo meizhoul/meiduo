@@ -77,7 +77,7 @@
                             <input v-model="email" @blur="check_email" type="email" name="email" class="email">
                             <input @click="save_email" type="button" name="" value="保 存">
                             <input @click="cancel_email" type="reset" name="" value="取 消">
-                            <div v-show="error_email" class="error_email_tip">邮箱格式错误</div>
+                            <div v-show="error_email" class="error_email_tip">[[error_email_message]]</div>
                         </div>
                         <div v-else>
                             <input v-model="email" type="email" name="email" class="email" readonly>
